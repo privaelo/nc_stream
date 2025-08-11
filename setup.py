@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="nc_stream",
     version="0.1.0",
-    description="Stream Sentinel-5P NetCDF files from public S3 into xarray, no local download",
+    description="Stream NetCDF files from public S3 into xarray, no local download",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     author="Tagnon Okoumassoun",
