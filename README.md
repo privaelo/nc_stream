@@ -15,7 +15,7 @@ Stream `.nc` files directly from the AWS Open Data Registry without downloading 
   pip install -e .
   ```
 
-##  Usage
+##  Example Usage
 
 ```python
 from nc_stream import stream_netcdf
