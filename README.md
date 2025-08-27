@@ -1,10 +1,11 @@
 # nc_stream
 
-Stream `.nc` files directly from the AWS Open Data Registry without downloading them.
+Stream `.nc` files directly from public S3 storage without downloading them.
 
-##  Features
+## Features
 
-- Stream NetCDF `.nc` files from **public S3 buckets**
+- Stream **any** NetCDF `.nc` object from public S3 buckets
+- Customize `engine`, `group`, and `storage_options`
 - Returns **xarray.Dataset** for easy geospatial processing
 - Built-in support for **Sentinel-5P NRTI CO** (Near Real time) datasets
 - Easily extensible for filtering, export, or transformation
@@ -15,7 +16,24 @@ Stream `.nc` files directly from the AWS Open Data Registry without downloading 
   pip install -e .
   ```
 
-##  Example Usage
+## Example Usage
+
+### Generic S3 NetCDF object
+
+```python
+from nc_stream import stream_netcdf
+
+ds = stream_netcdf(
+    bucket="my-public-bucket",
+    key="path/to/data.nc",
+    engine="netcdf4",
+    group="/subgroup",
+    storage_options={"region_name": "us-west-2"},
+)
+print(ds)
+```
+
+### Streaming Sentinel-5P data
 
 ```python
 from nc_stream import stream_netcdf

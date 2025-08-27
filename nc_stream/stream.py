@@ -1,13 +1,20 @@
 from __future__ import annotations
 import io
-from typing import Optional
+from typing import Optional, Dict, Any
 
 import boto3
 import xarray as xr
 from botocore import UNSIGNED, exceptions as boto_exc
 from botocore.config import Config
 
-def stream_netcdf(bucket: str, key: str, group: str = "/PRODUCT") -> xr.Dataset:
+def stream_netcdf(
+    bucket: str,
+    key: str,
+    group: str = "/PRODUCT",
+    *,
+    engine: str = "h5netcdf",
+    storage_options: Optional[Dict[str, Any]] = None,
+) -> xr.Dataset:
     """
     Stream a NetCDF file from a *public* S3 bucket and return an xarray.Dataset.
 
@@ -19,6 +26,11 @@ def stream_netcdf(bucket: str, key: str, group: str = "/PRODUCT") -> xr.Dataset:
         Object key path to the .nc file within the bucket.
     group : str, default "/PRODUCT"
         HDF5/NetCDF group to open.
+    engine : str, default "h5netcdf"
+        Engine passed to ``xarray.open_dataset``.
+    storage_options : dict, optional
+        Extra keyword arguments passed to ``boto3.client`` for S3 access
+        (e.g., ``{"region_name": "us-west-2"}``).
 
     Returns
     -------
@@ -40,7 +52,10 @@ def stream_netcdf(bucket: str, key: str, group: str = "/PRODUCT") -> xr.Dataset:
         raise ValueError("Expected an .nc key (NetCDF).")
 
     try:
-        s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
+        client_kwargs = storage_options or {}
+        s3 = boto3.client(
+            "s3", config=Config(signature_version=UNSIGNED), **client_kwargs
+        )
         obj = s3.get_object(Bucket=bucket, Key=key)  # works for public objects
     except boto_exc.ClientError as e:
         code = e.response.get("Error", {}).get("Code", "Unknown")
@@ -56,7 +71,7 @@ def stream_netcdf(bucket: str, key: str, group: str = "/PRODUCT") -> xr.Dataset:
         buffer = io.BytesIO(body)
         buffer.seek(0)
         # Important: specify engine and group
-        ds = xr.open_dataset(buffer, engine="h5netcdf", group=group)
+        ds = xr.open_dataset(buffer, engine=engine, group=group)
         # Eagerly load metadata/coords so underlying stream can GC safely
         return ds
     except Exception as e:
