@@ -1,24 +1,40 @@
 from __future__ import annotations
-import io
-from typing import Optional
 
-import boto3
+from typing import Any, Optional
+
+import fsspec
 import xarray as xr
-from botocore import UNSIGNED, exceptions as boto_exc
-from botocore.config import Config
 
-def stream_netcdf(bucket: str, key: str, group: str = "/PRODUCT") -> xr.Dataset:
+
+def stream_netcdf(
+    bucket: str,
+    key: str,
+    *,
+    engine: str = "h5netcdf",
+    group: str = "/PRODUCT",
+    storage_options: Optional[dict[str, Any]] = None,
+    chunks: Optional[Any] = None,
+    **open_dataset_kwargs: Any,
+) -> xr.Dataset:
     """
-    Stream a NetCDF file from a *public* S3 bucket and return an xarray.Dataset.
+    Stream a NetCDF file from a *public* S3 bucket and return an ``xarray.Dataset``.
 
     Parameters
     ----------
     bucket : str
-        S3 bucket name (e.g., "meeo-s5p").
+        S3 bucket name (e.g., ``"meeo-s5p"``).
     key : str
-        Object key path to the .nc file within the bucket.
+        Object key path to the NetCDF file (``.nc``, ``.nc4``, or ``.cdf``).
+    engine : str, default "h5netcdf"
+        Backend engine to pass to :func:`xarray.open_dataset`.
     group : str, default "/PRODUCT"
         HDF5/NetCDF group to open.
+    storage_options : dict, optional
+        ``fsspec`` storage options for S3 access.
+    chunks : dict or int, optional
+        Dask chunking passed to :func:`xarray.open_dataset`.
+    **open_dataset_kwargs
+        Additional keyword arguments forwarded to :func:`xarray.open_dataset`.
 
     Returns
     -------
@@ -36,28 +52,24 @@ def stream_netcdf(bucket: str, key: str, group: str = "/PRODUCT") -> xr.Dataset:
     """
     if not bucket or not key:
         raise ValueError("Both 'bucket' and 'key' are required.")
-    if not key.endswith(".nc"):
-        raise ValueError("Expected an .nc key (NetCDF).")
+    if not key.endswith((".nc", ".nc4", ".cdf")):
+        raise ValueError("Expected a NetCDF key ending with .nc, .nc4, or .cdf.")
+
+    url = f"s3://{bucket}/{key}"
 
     try:
-        s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
-        obj = s3.get_object(Bucket=bucket, Key=key)  # works for public objects
-    except boto_exc.ClientError as e:
-        code = e.response.get("Error", {}).get("Code", "Unknown")
-        if code in {"NoSuchKey", "404"}:
-            raise FileNotFoundError(f"S3 object not found: s3://{bucket}/{key}") from e
-        raise RuntimeError(f"S3 get_object failed ({code}) for s3://{bucket}/{key}") from e
+        with fsspec.open(url, mode="rb", **(storage_options or {})) as f:
+            ds = xr.open_dataset(
+                f,
+                engine=engine,
+                group=group,
+                chunks=chunks,
+                **open_dataset_kwargs,
+            )
+            return ds
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"S3 object not found: {url}") from e
     except Exception as e:
-        raise RuntimeError(f"S3 access failed for s3://{bucket}/{key}: {e}") from e
-
-    try:
-        # Read into memory; do NOT write to disk
-        body = obj["Body"].read()
-        buffer = io.BytesIO(body)
-        buffer.seek(0)
-        # Important: specify engine and group
-        ds = xr.open_dataset(buffer, engine="h5netcdf", group=group)
-        # Eagerly load metadata/coords so underlying stream can GC safely
-        return ds
-    except Exception as e:
-        raise RuntimeError(f"Failed to open NetCDF (group='{group}'): {e}") from e
+        raise RuntimeError(
+            f"Failed to open NetCDF from {url} (group='{group}'): {e}"
+        ) from e
