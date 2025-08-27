@@ -1,13 +1,20 @@
 from __future__ import annotations
 import io
-from typing import Optional
+from typing import Optional, Dict
 
 import boto3
 import xarray as xr
 from botocore import UNSIGNED, exceptions as boto_exc
 from botocore.config import Config
 
-def stream_netcdf(bucket: str, key: str, group: str = "/PRODUCT") -> xr.Dataset:
+def stream_netcdf(
+    bucket: str,
+    key: str,
+    group: str = "/PRODUCT",
+    *,
+    engine: Optional[str] = None,
+    storage_options: Optional[Dict[str, str]] = None,
+) -> xr.Dataset:
     """
     Stream a NetCDF file from a *public* S3 bucket and return an xarray.Dataset.
 
@@ -19,6 +26,10 @@ def stream_netcdf(bucket: str, key: str, group: str = "/PRODUCT") -> xr.Dataset:
         Object key path to the .nc file within the bucket.
     group : str, default "/PRODUCT"
         HDF5/NetCDF group to open.
+    engine : str, optional
+        xarray backend engine to use. Defaults to ``"h5netcdf"``.
+    storage_options : dict[str, str], optional
+        Additional storage options (currently unused).
 
     Returns
     -------
@@ -56,7 +67,7 @@ def stream_netcdf(bucket: str, key: str, group: str = "/PRODUCT") -> xr.Dataset:
         buffer = io.BytesIO(body)
         buffer.seek(0)
         # Important: specify engine and group
-        ds = xr.open_dataset(buffer, engine="h5netcdf", group=group)
+        ds = xr.open_dataset(buffer, engine=engine or "h5netcdf", group=group)
         # Eagerly load metadata/coords so underlying stream can GC safely
         return ds
     except Exception as e:
