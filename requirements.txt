@@ -39,3 +39,4 @@ twine==6.1.0
 tzdata==2025.2
 urllib3==2.5.0
 xarray==2025.7.1
+fsspec==2024.6.1
