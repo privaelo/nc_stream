@@ -7,8 +7,8 @@ Stream `.nc` files directly from public S3 buckets without downloading them.
 - Stream NetCDF `.nc` files from **any public S3 bucket**
 - Returns an **xarray.Dataset** without downloading data locally
 - Optional parameters for `engine`, `group`, and `storage_options`
-- Built-in support for **Sentinel-5P NRTI CO** (Near Real time) datasets
 - Easily extensible for filtering, export, or transformation
+- Powered by open-source tools like `xarray`, `fsspec`, and `s3fs`
 
 ##  Installation
 
@@ -34,7 +34,9 @@ ds = stream_netcdf(
 print(ds)
 ```
 
-### Real-world Example: Sentinel-5P NRTI CO
+### Example: Sentinel-5P NRTI CO dataset
+
+The library can stream any public NetCDF file. One possible dataset is the Sentinel-5P Near Real Time CO product hosted on AWS.
 
 ```python
 from nc_stream import stream_netcdf
@@ -48,10 +50,12 @@ ds = stream_netcdf(bucket, key, engine, group)
 print(ds)
 ```
 # Acknowledgements
-This package streams Sentinel-5P data hosted by MEEO via the AWS Open Data Registry, in support of the European Space Agency's Copernicus Programme.
-## License
+Thanks to the [AWS Open Data initiative](https://registry.opendata.aws/) and the open-source community behind `xarray`, `fsspec`, and `s3fs`.
+
+## Sentinel-5P License
 https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice
-## Documentation
+
+## Sentinel-5P Documentation
 https://github.com/Sentinel-5P/data-on-s3/blob/master/DocsForAws/Sentinel5P_Description.md
 
 ---
