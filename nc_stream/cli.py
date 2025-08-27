@@ -8,7 +8,7 @@ def main():
     parser.add_argument("--group", default="/PRODUCT")
     args = parser.parse_args()
 
-    ds = stream_netcdf(args.bucket, args.key, args.group)
+    ds = stream_netcdf(args.bucket, args.key, group=args.group)
     print(ds)
 
 if __name__ == "__main__":
