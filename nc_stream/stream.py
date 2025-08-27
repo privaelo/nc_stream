@@ -10,8 +10,8 @@ def stream_netcdf(
     bucket: str,
     key: str,
     *,
-    engine: str = "h5netcdf",
-    group: str = "/PRODUCT",
+    engine: str | None = None,
+    group: str | None = None,
     storage_options: Optional[dict[str, Any]] = None,
     chunks: Optional[Any] = None,
     **open_dataset_kwargs: Any,
@@ -25,10 +25,11 @@ def stream_netcdf(
         S3 bucket name (e.g., ``"meeo-s5p"``).
     key : str
         Object key path to the NetCDF file (``.nc``, ``.nc4``, or ``.cdf``).
-    engine : str, default "h5netcdf"
-        Backend engine to pass to :func:`xarray.open_dataset`.
-    group : str, default "/PRODUCT"
-        HDF5/NetCDF group to open.
+    engine : str, optional
+        Backend engine to pass to :func:`xarray.open_dataset`. If ``None``,
+        :mod:`xarray` selects an appropriate engine automatically.
+    group : str, optional
+        HDF5/NetCDF group to open. If ``None``, the root group is used.
     storage_options : dict, optional
         ``fsspec`` storage options for S3 access.
     chunks : dict or int, optional
@@ -59,13 +60,12 @@ def stream_netcdf(
 
     try:
         with fsspec.open(url, mode="rb", **(storage_options or {})) as f:
-            ds = xr.open_dataset(
-                f,
-                engine=engine,
-                group=group,
-                chunks=chunks,
-                **open_dataset_kwargs,
-            )
+            open_kwargs = {"chunks": chunks, **open_dataset_kwargs}
+            if engine is not None:
+                open_kwargs["engine"] = engine
+            if group is not None:
+                open_kwargs["group"] = group
+            ds = xr.open_dataset(f, **open_kwargs)
             return ds
     except FileNotFoundError as e:
         raise FileNotFoundError(f"S3 object not found: {url}") from e
