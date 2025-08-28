@@ -12,6 +12,8 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "boto3>=1.26",
+        "fsspec",
+        "s3fs",
         "xarray>=2023.1",
         "h5netcdf>=1.1.0",
     ],
