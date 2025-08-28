@@ -27,9 +27,9 @@ key = "path/to/file.nc"
 ds = stream_netcdf(
     bucket,
     key,
-    engine="h5netcdf",   # optional: choose xarray backend
-    group=None,          # optional: open a specific group within the file
-    storage_options={"anon": True},  # optional: S3 filesystem options
+    engine="h5netcdf",   # choose xarray backend
+    group=None,          # open a specific group within the file
+    storage_options={"anon": True},  # S3 filesystem options
 )
 print(ds)
 ```
@@ -57,7 +57,7 @@ ds = stream_netcdf(
 co = ds["carbonmonoxide_total_column"]
 qa = ds["qa_value"]
 
-print(co)
+print(co) #to get the actual values, use co.values
 ```
 
 A QA threshold of `0.5` may be used to discard retrievals flagged as low quality, retaining only the more reliable measurements.
