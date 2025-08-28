@@ -43,10 +43,10 @@ from nc_stream import stream_netcdf
 
 bucket = "meeo-s5p"
 key = "NRTI/L2__CO____/2023/08/01/S5P_NRTI_L2__CO_____20230801T230402_20230801T230902_30057_03_020500_20230802T000504.nc"
-group = "/PRODUCT"
-engine="h5netcdf"
+#group = "/PRODUCT"
+#engine="h5netcdf"
 
-ds = stream_netcdf(bucket, key, engine, group)
+ds = stream_netcdf(bucket, key)
 print(ds)
 ```
 # Acknowledgements
