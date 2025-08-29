@@ -65,7 +65,7 @@ def stream_netcdf(
                 open_kwargs["engine"] = engine
             if group is not None:
                 open_kwargs["group"] = group
-            ds = xr.open_dataset(f, **open_kwargs)
+            ds = xr.open_dataset(f, **open_kwargs).load()
             return ds
     except FileNotFoundError as e:
         raise FileNotFoundError(f"S3 object not found: {url}") from e
